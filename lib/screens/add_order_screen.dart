@@ -111,15 +111,56 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
-      source: ImageSource.camera,
+      source: source,
       imageQuality: 80,
     );
     if (picked != null) {
       setState(() => _clothImagePath = picked.path);
     }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded),
+              title: const Text('Take Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            if (_clothImagePath != null)
+              ListTile(
+                leading: const Icon(Icons.delete_rounded, color: Colors.red),
+                title: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _clothImagePath = null);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _selectDate() async {
@@ -309,7 +350,7 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
                 const _SectionLabel('Cloth Photo'),
                 const SizedBox(height: 8),
                 GestureDetector(
-                  onTap: _pickImage,
+                  onTap: _showImageSourceDialog,
                   child: Container(
                     height: 180,
                     width: double.infinity,
