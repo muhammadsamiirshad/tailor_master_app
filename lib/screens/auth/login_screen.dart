@@ -5,13 +5,9 @@ import '../../services/auth_service.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
-// ── Default credentials for quick testing ────────────────────────────────────
-const _kDefaultEmail = 'admin@tailormaster.com';
-const _kDefaultPassword = 'Tailor@123';
-
 const _kEmerald = Color(0xFF065F46);
 const _kEmeraldLight = Color(0xFF10B981);
-const _kBg = Color(0xFFF0FDF4);
+const _kDarkText = Color(0xFF111827);
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,15 +27,21 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
     super.initState();
     _animCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 800),
     );
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+
     _animCtrl.forward();
   }
 
@@ -49,12 +51,6 @@ class _LoginScreenState extends State<LoginScreen>
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _fillDefaults() {
-    _emailController.text = _kDefaultEmail;
-    _passwordController.text = _kDefaultPassword;
-    HapticFeedback.lightImpact();
   }
 
   Future<void> _submit() async {
@@ -91,6 +87,7 @@ class _LoginScreenState extends State<LoginScreen>
         backgroundColor: Colors.red.shade700,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -98,38 +95,71 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnim,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
+      body: Stack(
+        children: [
+          // Premium Background
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF0FDF4),
+                    Color(0xFFD1FAE5),
+                    Color(0xFFF3F4F6),
+                  ],
+                  stops: [0.0, 0.4, 1.0],
                 ),
-                children: [
-                  // ── Logo / Header ──────────────────────────────────────
-                  _buildHeader(),
-                  const SizedBox(height: 32),
-
-                  // ── Default credentials chip ───────────────────────────
-                  _buildDefaultCredentialsBanner(),
-                  const SizedBox(height: 24),
-
-                  // ── Form Card ─────────────────────────────────────────
-                  _buildFormCard(),
-                  const SizedBox(height: 20),
-
-                  // ── Sign up link ───────────────────────────────────────
-                  _buildSignupRow(),
-                ],
               ),
             ),
           ),
-        ),
+          Positioned(
+            top: -100,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    _kEmeraldLight.withValues(alpha: 0.15),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                child: FadeTransition(
+                  opacity: _fadeAnim,
+                  child: SlideTransition(
+                    position: _slideAnim,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildHeader(),
+                          const SizedBox(height: 40),
+                          _buildFormCard(),
+                          const SizedBox(height: 28),
+                          _buildSignupRow(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -138,120 +168,69 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: 86,
+          height: 86,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [_kEmerald, _kEmeraldLight],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: _kEmerald.withValues(alpha: 0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: _kEmerald.withValues(alpha: 0.4),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: const Icon(
             Icons.design_services_rounded,
             color: Colors.white,
-            size: 42,
+            size: 44,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 24),
         const Text(
           'Tailor Master',
           style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
             color: _kEmerald,
-            letterSpacing: -0.5,
+            letterSpacing: -0.8,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
-          'Sign in to manage your orders',
+          'Sign in to manage your workshop',
           style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
+            fontSize: 15,
+            color: Colors.grey.shade700,
             letterSpacing: 0.2,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDefaultCredentialsBanner() {
-    return GestureDetector(
-      onTap: _fillDefaults,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: _kEmerald.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _kEmerald.withValues(alpha: 0.25)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: _kEmerald.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.vpn_key_rounded,
-                color: _kEmerald,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Default Admin Credentials  •  Tap to fill',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: _kEmerald,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '$_kDefaultEmail  /  $_kDefaultPassword',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade700,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.touch_app_rounded, color: _kEmerald.withValues(alpha: 0.6), size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildFormCard() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: _kEmerald.withValues(alpha: 0.03),
+            blurRadius: 10,
+            spreadRadius: 2,
           ),
         ],
       ),
@@ -264,21 +243,21 @@ class _LoginScreenState extends State<LoginScreen>
             const Text(
               'Welcome back 👋',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
+                color: _kDarkText,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
-              'Enter your credentials to continue',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              'Please enter your credentials to proceed.',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 32),
 
             // Email
             _buildLabel('Email Address'),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -296,11 +275,11 @@ class _LoginScreenState extends State<LoginScreen>
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // Password
             _buildLabel('Password'),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
@@ -328,37 +307,38 @@ class _LoginScreenState extends State<LoginScreen>
             // Forgot password
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _isLoading
-                    ? null
-                    : () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ForgotPasswordScreen(),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 20),
+                child: TextButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ForgotPasswordScreen(),
+                            ),
                           ),
-                        ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 8,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                ),
-                child: const Text(
-                  'Forgot password?',
-                  style: TextStyle(
-                    color: _kEmerald,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                  child: const Text(
+                    'Forgot password?',
+                    style: TextStyle(
+                      color: _kEmerald,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 4),
 
             // Sign in button
             SizedBox(
               width: double.infinity,
-              height: 52,
+              height: 56,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
@@ -366,17 +346,18 @@ class _LoginScreenState extends State<LoginScreen>
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   textStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 child: _isLoading
                     ? const SizedBox(
-                        height: 22,
-                        width: 22,
+                        height: 24,
+                        width: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
                           color: Colors.white,
@@ -397,8 +378,13 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         Text(
           "Don't have an account?",
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        const SizedBox(width: 4),
         TextButton(
           onPressed: _isLoading
               ? null
@@ -406,11 +392,16 @@ class _LoginScreenState extends State<LoginScreen>
                     context,
                     MaterialPageRoute(builder: (_) => const SignupScreen()),
                   ),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: const Text(
             'Create one',
             style: TextStyle(
               color: _kEmerald,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               fontSize: 14,
             ),
           ),
@@ -424,8 +415,8 @@ class _LoginScreenState extends State<LoginScreen>
       label,
       style: const TextStyle(
         fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF374151),
+        fontWeight: FontWeight.w700,
+        color: _kDarkText,
       ),
     );
   }
@@ -438,30 +429,30 @@ class _LoginScreenState extends State<LoginScreen>
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-      prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
+      prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 22),
       suffixIcon: suffix,
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _kEmerald, width: 1.8),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _kEmerald, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade400),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade400, width: 1.8),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.red.shade400, width: 2),
       ),
     );
   }

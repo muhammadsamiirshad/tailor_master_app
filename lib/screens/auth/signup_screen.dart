@@ -4,7 +4,7 @@ import '../../services/auth_service.dart';
 
 const _kEmerald = Color(0xFF065F46);
 const _kEmeraldLight = Color(0xFF10B981);
-const _kBg = Color(0xFFF0FDF4);
+const _kDarkText = Color(0xFF111827);
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -26,15 +26,21 @@ class _SignupScreenState extends State<SignupScreen>
   bool _obscureConfirm = true;
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
     super.initState();
     _animCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
     );
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+
     _animCtrl.forward();
   }
 
@@ -83,65 +89,94 @@ class _SignupScreenState extends State<SignupScreen>
         backgroundColor: Colors.red.shade700,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnim,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
+      body: Stack(
+        children: [
+          // Premium Background
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF0FDF4),
+                    Color(0xFFD1FAE5),
+                    Color(0xFFF3F4F6),
+                  ],
+                  stops: [0.0, 0.4, 1.0],
                 ),
-                children: [
-                  // Back button row
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 18,
-                          color: _kEmerald,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  _buildHeader(),
-                  const SizedBox(height: 28),
-                  _buildFormCard(),
-                  const SizedBox(height: 20),
-                  _buildSignInRow(),
-                ],
               ),
             ),
           ),
-        ),
+          Positioned(
+            bottom: -100,
+            left: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    _kEmeraldLight.withValues(alpha: 0.15),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: FadeTransition(
+                  opacity: _fadeAnim,
+                  child: SlideTransition(
+                    position: _slideAnim,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: IconButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                              color: _kEmerald,
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                shadowColor: Colors.black.withValues(alpha: 0.2),
+                                elevation: 4,
+                                padding: const EdgeInsets.all(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _buildHeader(),
+                          const SizedBox(height: 32),
+                          _buildFormCard(),
+                          const SizedBox(height: 24),
+                          _buildSignInRow(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -150,45 +185,46 @@ class _SignupScreenState extends State<SignupScreen>
     return Column(
       children: [
         Container(
-          width: 72,
-          height: 72,
+          width: 76,
+          height: 76,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [_kEmerald, _kEmeraldLight],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
-                color: _kEmerald.withValues(alpha: 0.35),
-                blurRadius: 18,
-                offset: const Offset(0, 6),
+                color: _kEmerald.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: const Icon(
             Icons.person_add_alt_1_rounded,
             color: Colors.white,
-            size: 36,
+            size: 38,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         const Text(
           'Create Account',
           style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
             color: _kEmerald,
-            letterSpacing: -0.5,
+            letterSpacing: -0.6,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           'Join Tailor Master today',
           style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
+            fontSize: 15,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -197,15 +233,20 @@ class _SignupScreenState extends State<SignupScreen>
 
   Widget _buildFormCard() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: _kEmerald.withValues(alpha: 0.03),
+            blurRadius: 10,
+            spreadRadius: 2,
           ),
         ],
       ),
@@ -218,21 +259,21 @@ class _SignupScreenState extends State<SignupScreen>
             const Text(
               'Get started ✨',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
+                color: _kDarkText,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               'Fill in the details to create your account',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 28),
 
             // Email
             _buildLabel('Email Address'),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -250,11 +291,11 @@ class _SignupScreenState extends State<SignupScreen>
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // Password
             _buildLabel('Password'),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
@@ -280,11 +321,11 @@ class _SignupScreenState extends State<SignupScreen>
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // Confirm Password
             _buildLabel('Confirm Password'),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _confirmPasswordController,
               obscureText: _obscureConfirm,
@@ -313,16 +354,33 @@ class _SignupScreenState extends State<SignupScreen>
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
-            // Password strength hints
-            _buildPasswordHints(),
-            const SizedBox(height: 20),
+            // Terms and Conditions text
+            RichText(
+              text: TextSpan(
+                text: 'By creating an account, you agree to our ',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                children: const [
+                  TextSpan(
+                    text: 'Terms of Service',
+                    style: TextStyle(color: _kEmerald, fontWeight: FontWeight.w600),
+                  ),
+                  TextSpan(text: ' and '),
+                  TextSpan(
+                    text: 'Privacy Policy',
+                    style: TextStyle(color: _kEmerald, fontWeight: FontWeight.w600),
+                  ),
+                  TextSpan(text: '.'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
 
             // Create account button
             SizedBox(
               width: double.infinity,
-              height: 52,
+              height: 56,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
@@ -330,17 +388,18 @@ class _SignupScreenState extends State<SignupScreen>
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   textStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 child: _isLoading
                     ? const SizedBox(
-                        height: 22,
-                        width: 22,
+                        height: 24,
+                        width: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
                           color: Colors.white,
@@ -355,64 +414,31 @@ class _SignupScreenState extends State<SignupScreen>
     );
   }
 
-  Widget _buildPasswordHints() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Password requirements:',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          _hint('At least 6 characters long'),
-          _hint('Mix of letters and numbers recommended'),
-        ],
-      ),
-    );
-  }
-
-  Widget _hint(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle_outline, size: 14, color: _kEmerald.withValues(alpha: 0.7)),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSignInRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           'Already have an account?',
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        const SizedBox(width: 4),
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: const Text(
             'Sign In',
             style: TextStyle(
               color: _kEmerald,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               fontSize: 14,
             ),
           ),
@@ -426,8 +452,8 @@ class _SignupScreenState extends State<SignupScreen>
       label,
       style: const TextStyle(
         fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF374151),
+        fontWeight: FontWeight.w700,
+        color: _kDarkText,
       ),
     );
   }
@@ -440,30 +466,30 @@ class _SignupScreenState extends State<SignupScreen>
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-      prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 20),
+      prefixIcon: Icon(icon, color: Colors.grey.shade400, size: 22),
       suffixIcon: suffix,
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _kEmerald, width: 1.8),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: _kEmerald, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade400),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade400, width: 1.8),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.red.shade400, width: 2),
       ),
     );
   }
