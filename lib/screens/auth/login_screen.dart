@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen>
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: FadeTransition(
                   opacity: _fadeAnim,
                   child: SlideTransition(
@@ -147,9 +147,9 @@ class _LoginScreenState extends State<LoginScreen>
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildHeader(),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 24),
                           _buildFormCard(),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 16),
                           _buildSignupRow(),
                         ],
                       ),
@@ -168,34 +168,34 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       children: [
         Container(
-          width: 86,
-          height: 86,
+          width: 72,
+          height: 72,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [_kEmerald, _kEmeraldLight],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
                 color: _kEmerald.withValues(alpha: 0.4),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: const Icon(
             Icons.design_services_rounded,
             color: Colors.white,
-            size: 44,
+            size: 36,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         const Text(
           'Tailor Master',
           style: TextStyle(
-            fontSize: 32,
+            fontSize: 28,
             fontWeight: FontWeight.w900,
             color: _kEmerald,
             letterSpacing: -0.8,
@@ -217,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildFormCard() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
@@ -253,11 +253,11 @@ class _LoginScreenState extends State<LoginScreen>
               'Please enter your credentials to proceed.',
               style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
             // Email
             _buildLabel('Email Address'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -275,11 +275,11 @@ class _LoginScreenState extends State<LoginScreen>
                 return null;
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Password
             _buildLabel('Password'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
@@ -308,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen>
             Align(
               alignment: Alignment.centerRight,
               child: Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 20),
+                padding: const EdgeInsets.only(top: 4, bottom: 16),
                 child: TextButton(
                   onPressed: _isLoading
                       ? null
@@ -338,7 +338,7 @@ class _LoginScreenState extends State<LoginScreen>
             // Sign in button
             SizedBox(
               width: double.infinity,
-              height: 56,
+              height: 52,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(

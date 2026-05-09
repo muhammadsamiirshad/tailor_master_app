@@ -522,7 +522,7 @@ class _MeasurementsGrid extends StatelessWidget {
         crossAxisCount: 3,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        childAspectRatio: 2.0,
+        mainAxisExtent: 64, // Fixed height to prevent vertical overflow on narrow screens
       ),
       itemCount: measurements.length,
       itemBuilder: (context, index) {

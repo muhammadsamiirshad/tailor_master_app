@@ -137,7 +137,7 @@ class _SignupScreenState extends State<SignupScreen>
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: FadeTransition(
                   opacity: _fadeAnim,
                   child: SlideTransition(
@@ -152,21 +152,22 @@ class _SignupScreenState extends State<SignupScreen>
                             alignment: Alignment.centerLeft,
                             child: IconButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
                               color: _kEmerald,
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.white,
                                 shadowColor: Colors.black.withValues(alpha: 0.2),
                                 elevation: 4,
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(10),
+                                minimumSize: const Size(40, 40),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
                           _buildHeader(),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 16),
                           _buildFormCard(),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 12),
                           _buildSignInRow(),
                         ],
                       ),
@@ -185,34 +186,34 @@ class _SignupScreenState extends State<SignupScreen>
     return Column(
       children: [
         Container(
-          width: 76,
-          height: 76,
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [_kEmerald, _kEmeraldLight],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
                 color: _kEmerald.withValues(alpha: 0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: const Icon(
             Icons.person_add_alt_1_rounded,
             color: Colors.white,
-            size: 38,
+            size: 32,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         const Text(
           'Create Account',
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 24,
             fontWeight: FontWeight.w900,
             color: _kEmerald,
             letterSpacing: -0.6,
@@ -233,7 +234,7 @@ class _SignupScreenState extends State<SignupScreen>
 
   Widget _buildFormCard() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
@@ -269,11 +270,11 @@ class _SignupScreenState extends State<SignupScreen>
               'Fill in the details to create your account',
               style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
 
             // Email
             _buildLabel('Email Address'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -291,11 +292,11 @@ class _SignupScreenState extends State<SignupScreen>
                 return null;
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // Password
             _buildLabel('Password'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
@@ -321,11 +322,11 @@ class _SignupScreenState extends State<SignupScreen>
                 return null;
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // Confirm Password
             _buildLabel('Confirm Password'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _confirmPasswordController,
               obscureText: _obscureConfirm,
@@ -354,7 +355,7 @@ class _SignupScreenState extends State<SignupScreen>
                 return null;
               },
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
 
             // Terms and Conditions text
             RichText(
@@ -375,12 +376,12 @@ class _SignupScreenState extends State<SignupScreen>
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Create account button
             SizedBox(
               width: double.infinity,
-              height: 56,
+              height: 52,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
