@@ -23,6 +23,13 @@ class Order {
   bool get isPending => status == 'Pending';
   bool get isCompleted => status == 'Completed';
 
+  /// A short, readable 5-character ID derived from the Firebase push key.
+  String get shortId {
+    if (id == null) return '';
+    if (id!.length < 5) return id!.toUpperCase();
+    return id!.substring(id!.length - 5).toUpperCase();
+  }
+
   /// Creates an [Order] from a Firebase RTDB snapshot map.
   factory Order.fromMap(String id, Map<dynamic, dynamic> map) {
     return Order(

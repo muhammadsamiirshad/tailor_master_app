@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -326,10 +327,15 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(11),
-                                child: Image.file(
-                                  File(_clothImagePath!),
-                                  fit: BoxFit.cover,
-                                ),
+                                child: kIsWeb
+                                    ? Image.network(
+                                        _clothImagePath!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.file(
+                                        File(_clothImagePath!),
+                                        fit: BoxFit.cover,
+                                      ),
                               ),
                               Positioned(
                                 bottom: 8,

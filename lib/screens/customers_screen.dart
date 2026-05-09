@@ -321,7 +321,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
                               }
                               return canDelete;
                             },
-                            child: _CustomerTile(customer: customer),
+                            child: _CustomerTile(
+                              customer: customer,
+                              onEdit: () => _showEditCustomerDialog(context, provider, customer),
+                              onDelete: () async {
+                                final canDelete = await _confirmDeleteCustomer(context, customer);
+                                if (canDelete && customer.id != null) {
+                                  await provider.deleteCustomer(customer.id!);
+                                  if (mounted && _searchController.text.trim().isNotEmpty) {
+                                    await _onSearchChanged(_searchController.text, provider);
+                                  }
+                                }
+                              },
+                            ),
                           );
                         },
                       ),
@@ -338,7 +350,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
 class _CustomerTile extends StatelessWidget {
   final Customer customer;
-  const _CustomerTile({required this.customer});
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _CustomerTile({
+    required this.customer,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -449,6 +468,29 @@ class _CustomerTile extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_rounded, size: 18),
+                label: const Text('Edit'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF065F46),
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_rounded, size: 18),
+                label: const Text('Delete'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red.shade600,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

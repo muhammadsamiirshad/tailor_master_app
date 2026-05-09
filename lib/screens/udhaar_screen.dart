@@ -130,7 +130,7 @@ class UdhaarScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Order?'),
-        content: Text('Delete order #${order.id}? This cannot be undone.'),
+        content: Text('Delete order #${order.shortId}? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -165,7 +165,7 @@ class _UdhaarCard extends StatelessWidget {
     final balance = order.remainingBalance.toStringAsFixed(0);
 
     final message = Uri.encodeComponent(
-      'Your suit is ready. Remaining payment: Rs $balance. Please collect it.',
+      'Hello ${customer.name}, your order #${order.shortId} from Tailor Master is ready. Remaining payment: Rs $balance. Please collect it.',
     );
 
     final uri = Uri.parse('https://wa.me/$phone?text=$message');
@@ -361,7 +361,7 @@ class _UdhaarCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Order #${order.id}',
+                      'Order #${order.shortId}',
                       style: TextStyle(fontSize: 12, color: Colors.grey[400]),
                     ),
                   ],

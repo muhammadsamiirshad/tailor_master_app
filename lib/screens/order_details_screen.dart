@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/customer.dart';
 import '../models/order.dart';
 import '../providers/darzi_provider.dart';
+import 'add_order_screen.dart';
 
 const _kEmerald = Color(0xFF065F46);
 
@@ -54,11 +55,63 @@ class OrderDetailsScreen extends StatelessWidget {
         );
 
         return Scaffold(
-          appBar: AppBar(title: Text('Order #${order.id}')),
+          appBar: AppBar(
+            title: Text('Order #${order.shortId}'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_rounded),
+                tooltip: 'Edit Order',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AddOrderScreen(existingOrder: order),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_rounded),
+                tooltip: 'Delete Order',
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete Order?'),
+                      content: Text('Delete order #${order.shortId}? This cannot be undone.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade600,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true && context.mounted) {
+                    await provider.deleteOrder(order.id!);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Order deleted.')),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
           body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              _CustomerCard(customer: customer),
+              _CustomerCard(customer: customer, order: order),
               const SizedBox(height: 12),
               _OrderSummaryCard(order: order),
               const SizedBox(height: 12),
@@ -75,8 +128,9 @@ class OrderDetailsScreen extends StatelessWidget {
 
 class _CustomerCard extends StatelessWidget {
   final Customer customer;
+  final Order order;
 
-  const _CustomerCard({required this.customer});
+  const _CustomerCard({required this.customer, required this.order});
 
   Future<void> _launchCall(BuildContext context) async {
     if (customer.phone.trim().isEmpty) return;
@@ -93,7 +147,10 @@ class _CustomerCard extends StatelessWidget {
   Future<void> _launchWhatsApp(BuildContext context) async {
     if (customer.phone.trim().isEmpty) return;
     final phone = customer.phone.replaceAll(RegExp(r'[\s\-()]'), '');
-    final uri = Uri.parse('https://wa.me/$phone');
+    final msg = Uri.encodeComponent(
+      'Hello ${customer.name}, this is a message regarding your order #${order.shortId} from Tailor Master.',
+    );
+    final uri = Uri.parse('https://wa.me/$phone?text=$msg');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {

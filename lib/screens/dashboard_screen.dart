@@ -596,7 +596,7 @@ class _UrgentOrderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${customer.phone}  •  $formattedDate  •  Order #${order.id}',
+                      '${customer.phone}  •  $formattedDate  •  Order #${order.shortId}',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 3),
@@ -668,7 +668,7 @@ class _UpcomingOrderCard extends StatelessWidget {
         leading: CircleAvatar(
           backgroundColor: _kEmerald.withValues(alpha: 0.12),
           child: Text(
-            '${order.id}',
+            order.shortId,
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,

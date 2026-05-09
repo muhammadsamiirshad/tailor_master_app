@@ -162,7 +162,29 @@ class _OrdersList extends StatelessWidget {
             }
             return confirmed;
           },
-          child: _OrderCard(order: order, customer: customer),
+          child: _OrderCard(
+            order: order,
+            customer: customer,
+            onEdit: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddOrderScreen(existingOrder: order),
+                ),
+              );
+            },
+            onDelete: () async {
+              final confirmed = await _confirmDeleteOrder(context, order);
+              if (confirmed && order.id != null) {
+                await context.read<DarziProvider>().deleteOrder(order.id!);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Order deleted.')),
+                  );
+                }
+              }
+            },
+          ),
         );
       },
     );
@@ -173,7 +195,7 @@ class _OrdersList extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Order?'),
-        content: Text('Delete order #${order.id}? This cannot be undone.'),
+        content: Text('Delete order #${order.shortId}? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -199,8 +221,15 @@ class _OrdersList extends StatelessWidget {
 class _OrderCard extends StatelessWidget {
   final Order order;
   final Customer customer;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _OrderCard({required this.order, required this.customer});
+  const _OrderCard({
+    required this.order,
+    required this.customer,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -240,6 +269,38 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ),
                   _StatusChip(isPending: isPending),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        onEdit();
+                      } else if (value == 'delete') {
+                        onDelete();
+                      }
+                    },
+                    icon: const Icon(Icons.more_vert_rounded, size: 20),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_rounded, size: 18, color: _kEmerald),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_rounded, size: 18, color: Colors.red.shade600),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red.shade600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 3),
