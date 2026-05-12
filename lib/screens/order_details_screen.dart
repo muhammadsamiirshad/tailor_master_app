@@ -13,17 +13,6 @@ import 'add_order_screen.dart';
 
 const _kEmerald = Color(0xFF065F46);
 
-Customer _unknownCustomer() => Customer(
-  name: 'Unknown',
-  phone: '',
-  length: 0,
-  chest: 0,
-  shoulder: 0,
-  sleeves: 0,
-  collar: 0,
-  shalwar: 0,
-);
-
 class OrderDetailsScreen extends StatelessWidget {
   final String orderId;
 
@@ -33,10 +22,8 @@ class OrderDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<DarziProvider>(
       builder: (context, provider, _) {
-        final orderList = provider.allOrders
-            .where((o) => o.id == orderId)
-            .toList();
-        if (orderList.isEmpty) {
+        final order = provider.orderFor(orderId);
+        if (order == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Order Details')),
             body: Center(
@@ -48,11 +35,8 @@ class OrderDetailsScreen extends StatelessWidget {
           );
         }
 
-        final order = orderList.first;
-        final customer = provider.customers.firstWhere(
-          (c) => c.id == order.customerId,
-          orElse: _unknownCustomer,
-        );
+        final customer =
+            provider.customerFor(order.customerId) ?? Customer.unknown();
 
         return Scaffold(
           appBar: AppBar(
@@ -78,7 +62,9 @@ class OrderDetailsScreen extends StatelessWidget {
                     context: context,
                     builder: (ctx) => AlertDialog(
                       title: const Text('Delete Order?'),
-                      content: Text('Delete order #${order.shortId}? This cannot be undone.'),
+                      content: Text(
+                        'Delete order #${order.shortId}? This cannot be undone.',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -150,7 +136,18 @@ class _CustomerCard extends StatelessWidget {
     final msg = Uri.encodeComponent(
       'Hello ${customer.name}, this is a message regarding your order #${order.shortId} from Tailor Master.',
     );
-    final uri = Uri.parse('https://wa.me/$phone?text=$msg');
+
+    // Use platform-specific URL scheme: whatsapp:// on mobile, https://wa.me on web.
+    late Uri uri;
+    if (Platform.isAndroid) {
+      uri = Uri.parse('whatsapp://send?phone=$phone&text=$msg');
+    } else if (Platform.isIOS) {
+      uri = Uri.parse('https://wa.me/$phone?text=$msg');
+    } else {
+      // Web and other platforms
+      uri = Uri.parse('https://wa.me/$phone?text=$msg');
+    }
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {

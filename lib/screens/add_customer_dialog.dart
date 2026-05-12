@@ -146,18 +146,22 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final provider = context.read<DarziProvider>();
     final newPhone = _phoneCtrl.text.trim();
-    
+
     // Check for duplicate phone number
-    final isDuplicate = provider.customers.any((c) => 
-        c.phone == newPhone && c.id != widget.existingCustomer?.id);
-        
+    final isDuplicate = provider.customerHasPhone(
+      newPhone,
+      excludeCustomerId: widget.existingCustomer?.id,
+    );
+
     if (isDuplicate) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('A customer with this phone number already exists.'),
+          content: const Text(
+            'A customer with this phone number already exists.',
+          ),
           backgroundColor: Colors.red.shade600,
         ),
       );

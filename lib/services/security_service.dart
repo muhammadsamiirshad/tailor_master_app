@@ -1,16 +1,53 @@
+import 'dart:io';
 import 'package:encrypt/encrypt.dart' as enc;
 
 /// Provides AES-256 (CBC mode) encryption and decryption for sensitive data.
 ///
-/// ⚠️  Replace [_keyString] and [_ivString] with secure, externally-supplied
-/// values before releasing to production.
+/// Keys are loaded from environment variables (ENCRYPTION_KEY and ENCRYPTION_IV).
+/// ⚠️  NEVER hardcode keys. Always use environment variables or secure storage.
 class SecurityService {
   // ── Keys ──────────────────────────────────────────────────────────────────
   /// Must be exactly 32 characters (256-bit key for AES-256).
-  static const String _keyString = 'MySecretKey12345MySecretKey12345';
+  /// Loaded from ENCRYPTION_KEY environment variable.
+  static final String _keyString = _getEncryptionKey();
 
   /// Must be exactly 16 characters (128-bit IV for AES-CBC).
-  static const String _ivString = 'MyIV123456789012';
+  /// Loaded from ENCRYPTION_IV environment variable.
+  static final String _ivString = _getEncryptionIV();
+
+  /// Gets encryption key from environment, with fallback validation.
+  static String _getEncryptionKey() {
+    final key = Platform.environment['ENCRYPTION_KEY'] ?? '';
+    if (key.isEmpty) {
+      throw Exception(
+        'ENCRYPTION_KEY environment variable not set. '
+        'Generate a secure 32-character key and set it before running the app.',
+      );
+    }
+    if (key.length != 32) {
+      throw Exception(
+        'ENCRYPTION_KEY must be exactly 32 characters. Current length: ${key.length}',
+      );
+    }
+    return key;
+  }
+
+  /// Gets encryption IV from environment, with fallback validation.
+  static String _getEncryptionIV() {
+    final iv = Platform.environment['ENCRYPTION_IV'] ?? '';
+    if (iv.isEmpty) {
+      throw Exception(
+        'ENCRYPTION_IV environment variable not set. '
+        'Generate a secure 16-character IV and set it before running the app.',
+      );
+    }
+    if (iv.length != 16) {
+      throw Exception(
+        'ENCRYPTION_IV must be exactly 16 characters. Current length: ${iv.length}',
+      );
+    }
+    return iv;
+  }
 
   // Singleton ----------------------------------------------------------------
   SecurityService._internal();

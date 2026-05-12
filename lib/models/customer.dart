@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../services/security_service.dart';
 
 class Customer {
-  final String? id;   // Realtime Database push key (String)
+  final String? id; // Realtime Database push key (String)
   final String name;
   final String phone;
 
@@ -34,6 +34,19 @@ class Customer {
     Map<String, double>? customMeasurements,
     this.notes = '',
   }) : customMeasurements = customMeasurements ?? {};
+
+  factory Customer.unknown() {
+    return Customer(
+      name: 'Unknown',
+      phone: '',
+      length: 0,
+      chest: 0,
+      shoulder: 0,
+      sleeves: 0,
+      collar: 0,
+      shalwar: 0,
+    );
+  }
 
   /// Creates a [Customer] from a Firebase RTDB snapshot map.
   factory Customer.fromMap(String id, Map<dynamic, dynamic> map) {

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -32,7 +34,6 @@ class UdhaarScreen extends StatelessWidget {
       body: Consumer<DarziProvider>(
         builder: (context, provider, _) {
           final orders = provider.udhaarOrders;
-          final customers = provider.customers;
 
           if (orders.isEmpty) {
             return Center(
@@ -64,19 +65,8 @@ class UdhaarScreen extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-              final customer = customers.firstWhere(
-                (c) => c.id == order.customerId,
-                orElse: () => Customer(
-                  name: 'Unknown',
-                  phone: '',
-                  length: 0,
-                  chest: 0,
-                  shoulder: 0,
-                  sleeves: 0,
-                  collar: 0,
-                  shalwar: 0,
-                ),
-              );
+              final customer =
+                  provider.customerFor(order.customerId) ?? Customer.unknown();
               return Dismissible(
                 key: ValueKey('udhaar_${order.id ?? index}'),
                 direction: DismissDirection.horizontal,
@@ -168,7 +158,16 @@ class _UdhaarCard extends StatelessWidget {
       'Hello ${customer.name}, your order #${order.shortId} from Tailor Master is ready. Remaining payment: Rs $balance. Please collect it.',
     );
 
-    final uri = Uri.parse('https://wa.me/$phone?text=$message');
+    // Use platform-specific URL scheme: whatsapp:// on mobile, https://wa.me on web.
+    late Uri uri;
+    if (Platform.isAndroid) {
+      uri = Uri.parse('whatsapp://send?phone=$phone&text=$message');
+    } else if (Platform.isIOS) {
+      uri = Uri.parse('https://wa.me/$phone?text=$message');
+    } else {
+      // Web and other platforms
+      uri = Uri.parse('https://wa.me/$phone?text=$message');
+    }
 
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

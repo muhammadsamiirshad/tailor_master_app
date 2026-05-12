@@ -112,16 +112,7 @@ class _OrdersList extends StatelessWidget {
         final order = orders[index];
         final customer = customers.firstWhere(
           (c) => c.id == order.customerId,
-          orElse: () => Customer(
-            name: 'Unknown',
-            phone: '',
-            length: 0,
-            chest: 0,
-            shoulder: 0,
-            sleeves: 0,
-            collar: 0,
-            shalwar: 0,
-          ),
+          orElse: Customer.unknown,
         );
         return Dismissible(
           key: ValueKey('order_${order.id ?? index}'),
@@ -283,7 +274,11 @@ class _OrderCard extends StatelessWidget {
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit_rounded, size: 18, color: _kEmerald),
+                            Icon(
+                              Icons.edit_rounded,
+                              size: 18,
+                              color: _kEmerald,
+                            ),
                             SizedBox(width: 8),
                             Text('Edit'),
                           ],
@@ -293,9 +288,16 @@ class _OrderCard extends StatelessWidget {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_rounded, size: 18, color: Colors.red.shade600),
+                            Icon(
+                              Icons.delete_rounded,
+                              size: 18,
+                              color: Colors.red.shade600,
+                            ),
                             SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red.shade600)),
+                            Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red.shade600),
+                            ),
                           ],
                         ),
                       ),

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
+import '../models/dashboard_summary.dart';
 import '../models/customer.dart';
 import '../models/order.dart';
 import '../services/rtdb_service.dart';
@@ -14,19 +15,76 @@ class DarziProvider extends ChangeNotifier {
   List<Order> _udhaarOrders = [];
   List<Order> _allOrders = [];
   List<String> _globalMeasurementFields = [];
+  DashboardSummary? _dashboardSummary;
 
   List<Customer> get customers => List.unmodifiable(_customers);
   List<Order> get urgentOrders => List.unmodifiable(_urgentOrders);
   List<Order> get udhaarOrders => List.unmodifiable(_udhaarOrders);
   List<Order> get allOrders => List.unmodifiable(_allOrders);
 
+  /// Immutable dashboard snapshot used by the UI layer.
+  DashboardSummary get dashboardSummary =>
+      _dashboardSummary ??= DashboardSummary.empty();
+
+  /// Backward-compatible dashboard metric accessors.
+  int get cachedPendingCount => dashboardSummary.pendingCount;
+  double get cachedTotalDues => dashboardSummary.totalDues;
+  List<Order> get cachedUpcomingOrders =>
+      List.unmodifiable(dashboardSummary.upcomingOrders);
+  List<Order> get cachedThisMonthOrders =>
+      List.unmodifiable(dashboardSummary.thisMonthOrders);
+  double get cachedMonthRevenue => dashboardSummary.monthRevenue;
+  double get cachedMonthCollected => dashboardSummary.monthCollected;
+
   /// Global extra measurement field names defined in Settings.
   List<String> get globalMeasurementFields =>
       List.unmodifiable(_globalMeasurementFields);
 
+  /// Compute all dashboard metrics once (called when data changes)
+  void _recomputeDashboardMetrics() {
+    final upcomingOrders = _allOrders
+        .where((o) => o.isPending)
+        .take(5)
+        .toList();
+
+    final now = DateTime.now();
+    final thisMonthOrders = _allOrders
+        .where(
+          (o) =>
+              o.deliveryDate.year == now.year &&
+              o.deliveryDate.month == now.month,
+        )
+        .toList();
+    final totalDues = _udhaarOrders.fold<double>(
+      0,
+      (sum, o) => sum + o.remainingBalance,
+    );
+
+    final monthRevenue = thisMonthOrders.fold<double>(
+      0,
+      (s, o) => s + o.totalCost,
+    );
+    final monthCollected = thisMonthOrders.fold<double>(
+      0,
+      (s, o) => s + o.advancePaid,
+    );
+
+    _dashboardSummary = DashboardSummary(
+      customers: List.unmodifiable(_customers),
+      urgentOrders: List.unmodifiable(_urgentOrders),
+      allOrders: List.unmodifiable(_allOrders),
+      upcomingOrders: List.unmodifiable(upcomingOrders),
+      thisMonthOrders: List.unmodifiable(thisMonthOrders),
+      totalDues: totalDues,
+      monthRevenue: monthRevenue,
+      monthCollected: monthCollected,
+    );
+  }
+
   // ─── Initialization ────────────────────────────────────────────────────────
 
   /// Call once after login to pre-load all data from Firebase RTDB.
+  /// Automatically computes all dashboard metrics.
   Future<void> init() async {
     await Future.wait([
       _loadCustomers(),
@@ -35,6 +93,7 @@ class DarziProvider extends ChangeNotifier {
       _loadAllOrders(),
       _loadGlobalMeasurementFields(),
     ]);
+    _recomputeDashboardMetrics();
     notifyListeners();
   }
 
@@ -92,6 +151,30 @@ class DarziProvider extends ChangeNotifier {
         )
         .take(10)
         .toList();
+  }
+
+  Customer? customerFor(String customerId) {
+    try {
+      return _customers.firstWhere((customer) => customer.id == customerId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Order? orderFor(String orderId) {
+    try {
+      return _allOrders.firstWhere((order) => order.id == orderId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool customerHasPhone(String phone, {String? excludeCustomerId}) {
+    final normalizedPhone = phone.trim();
+    return _customers.any(
+      (customer) =>
+          customer.phone == normalizedPhone && customer.id != excludeCustomerId,
+    );
   }
 
   // ─── Settings / Global Measurement Fields ──────────────────────────────────
@@ -164,6 +247,7 @@ class DarziProvider extends ChangeNotifier {
       _loadUdhaarOrders(),
       _loadAllOrders(),
     ]);
+    _recomputeDashboardMetrics();
     notifyListeners();
     return id;
   }
@@ -176,6 +260,7 @@ class DarziProvider extends ChangeNotifier {
       _loadUdhaarOrders(),
       _loadAllOrders(),
     ]);
+    _recomputeDashboardMetrics();
     notifyListeners();
   }
 
@@ -187,6 +272,7 @@ class DarziProvider extends ChangeNotifier {
       _loadUdhaarOrders(),
       _loadAllOrders(),
     ]);
+    _recomputeDashboardMetrics();
     notifyListeners();
   }
 
@@ -197,6 +283,7 @@ class DarziProvider extends ChangeNotifier {
       _loadUdhaarOrders(),
       _loadAllOrders(),
     ]);
+    _recomputeDashboardMetrics();
     notifyListeners();
   }
 
@@ -204,6 +291,7 @@ class DarziProvider extends ChangeNotifier {
   Future<void> recordPayment(String orderId, double amount) async {
     await _db.recordAdvancePaid(orderId, amount);
     await Future.wait([_loadUdhaarOrders(), _loadAllOrders()]);
+    _recomputeDashboardMetrics();
     notifyListeners();
   }
 

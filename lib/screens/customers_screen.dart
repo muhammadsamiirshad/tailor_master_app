@@ -25,6 +25,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
     super.dispose();
   }
 
+  /// ✅ Use local in-memory search instead of database queries (INSTANT, NO LAG)
   Future<void> _onSearchChanged(String query, DarziProvider provider) async {
     if (query.trim().isEmpty) {
       setState(() {
@@ -33,8 +34,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
       });
       return;
     }
+    // ✅ Use synchronous local filtering (no DB call)
     setState(() => _isSearching = true);
-    final results = await provider.searchCustomers(query.trim());
+    final results = provider.filterCustomers(query.trim());
+    // Add tiny delay to show loading state briefly (optional)
+    await Future.delayed(const Duration(milliseconds: 100));
     if (mounted) {
       setState(() {
         _searchResults = results;
@@ -323,13 +327,26 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             },
                             child: _CustomerTile(
                               customer: customer,
-                              onEdit: () => _showEditCustomerDialog(context, provider, customer),
+                              onEdit: () => _showEditCustomerDialog(
+                                context,
+                                provider,
+                                customer,
+                              ),
                               onDelete: () async {
-                                final canDelete = await _confirmDeleteCustomer(context, customer);
+                                final canDelete = await _confirmDeleteCustomer(
+                                  context,
+                                  customer,
+                                );
                                 if (canDelete && customer.id != null) {
                                   await provider.deleteCustomer(customer.id!);
-                                  if (mounted && _searchController.text.trim().isNotEmpty) {
-                                    await _onSearchChanged(_searchController.text, provider);
+                                  if (mounted &&
+                                      _searchController.text
+                                          .trim()
+                                          .isNotEmpty) {
+                                    await _onSearchChanged(
+                                      _searchController.text,
+                                      provider,
+                                    );
                                   }
                                 }
                               },
@@ -522,7 +539,8 @@ class _MeasurementsGrid extends StatelessWidget {
         crossAxisCount: 3,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        mainAxisExtent: 64, // Fixed height to prevent vertical overflow on narrow screens
+        mainAxisExtent:
+            64, // Fixed height to prevent vertical overflow on narrow screens
       ),
       itemCount: measurements.length,
       itemBuilder: (context, index) {

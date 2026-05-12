@@ -58,19 +58,8 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
     _clothImagePath = existing.clothImagePath;
 
     final provider = context.read<DarziProvider>();
-    final customer = provider.customers.firstWhere(
-      (c) => c.id == existing.customerId,
-      orElse: () => Customer(
-        name: 'Unknown',
-        phone: '',
-        length: 0,
-        chest: 0,
-        shoulder: 0,
-        sleeves: 0,
-        collar: 0,
-        shalwar: 0,
-      ),
-    );
+    final customer =
+        provider.customerFor(existing.customerId) ?? Customer.unknown();
     _selectedCustomer = customer.id == null ? null : customer;
     _customerSearchCtrl.text = customer.id == null ? '' : customer.name;
   }
@@ -113,10 +102,7 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: source,
-      imageQuality: 80,
-    );
+    final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked != null) {
       setState(() => _clothImagePath = picked.path);
     }
@@ -151,7 +137,10 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
             if (_clothImagePath != null)
               ListTile(
                 leading: const Icon(Icons.delete_rounded, color: Colors.red),
-                title: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+                title: const Text(
+                  'Remove Photo',
+                  style: TextStyle(color: Colors.red),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   setState(() => _clothImagePath = null);
@@ -461,11 +450,17 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
                     prefixIcon: const Icon(Icons.sell_outlined),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+                      borderSide: BorderSide(
+                        color: Colors.red.shade400,
+                        width: 1.5,
+                      ),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+                      borderSide: BorderSide(
+                        color: Colors.red.shade400,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   validator: (v) {
@@ -494,11 +489,17 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
                     prefixIcon: const Icon(Icons.payments_outlined),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+                      borderSide: BorderSide(
+                        color: Colors.red.shade400,
+                        width: 1.5,
+                      ),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+                      borderSide: BorderSide(
+                        color: Colors.red.shade400,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   validator: (v) {
@@ -508,7 +509,8 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
                       if (advance == null) return 'Enter a valid number';
                       if (advance < 0) return 'Advance cannot be negative';
                       final total =
-                          double.tryParse(_totalCostController.text.trim()) ?? 0;
+                          double.tryParse(_totalCostController.text.trim()) ??
+                          0;
                       if (advance > total) {
                         return 'Advance cannot exceed total (Rs ${total.toStringAsFixed(0)})';
                       }
