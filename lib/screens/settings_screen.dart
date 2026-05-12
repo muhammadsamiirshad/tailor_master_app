@@ -153,9 +153,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
       ),
-      body: Consumer<DarziProvider>(
-        builder: (context, provider, _) {
-          final customFields = provider.globalMeasurementFields;
+      body: Selector<DarziProvider, List<String>>(
+        selector: (context, provider) => provider.globalMeasurementFields,
+        builder: (context, customFields, _) {
+          // 🚀 Get provider reference for modification operations
+          final provider = context.read<DarziProvider>();
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
@@ -443,10 +445,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   subtitle: Text(
                     'Sign out of your account',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                   trailing: Icon(
                     Icons.chevron_right_rounded,

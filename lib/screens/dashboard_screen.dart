@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/customer.dart';
+import '../models/dashboard_summary.dart';
 import '../models/order.dart';
 import '../providers/darzi_provider.dart';
 import 'add_order_screen.dart';
@@ -43,14 +44,15 @@ class DashboardScreen extends StatelessWidget {
         icon: const Icon(Icons.add_rounded),
         label: const Text('New Order'),
       ),
-      body: Consumer<DarziProvider>(
-        builder: (context, provider, _) {
-          final dashboard = provider.dashboardSummary;
+      // 🚀 Use Selector instead of Consumer to only rebuild when dashboard changes
+      body: Selector<DarziProvider, DashboardSummary>(
+        selector: (context, provider) => provider.dashboardSummary,
+        builder: (context, dashboard, _) {
           final monthName = DateFormat('MMMM').format(DateTime.now());
 
           return RefreshIndicator(
             color: _kEmerald,
-            onRefresh: () => provider.init(),
+            onRefresh: () => context.read<DarziProvider>().init(),
             child: CustomScrollView(
               slivers: [
                 // ── Gradient App Bar ─────────────────────────────────────────

@@ -1,27 +1,27 @@
-import 'dart:io';
 import 'package:encrypt/encrypt.dart' as enc;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Provides AES-256 (CBC mode) encryption and decryption for sensitive data.
 ///
-/// Keys are loaded from environment variables (ENCRYPTION_KEY and ENCRYPTION_IV).
+/// Keys are loaded from the app's .env file (ENCRYPTION_KEY and ENCRYPTION_IV).
 /// ⚠️  NEVER hardcode keys. Always use environment variables or secure storage.
 class SecurityService {
   // ── Keys ──────────────────────────────────────────────────────────────────
   /// Must be exactly 32 characters (256-bit key for AES-256).
-  /// Loaded from ENCRYPTION_KEY environment variable.
+  /// Loaded from the .env file.
   static final String _keyString = _getEncryptionKey();
 
   /// Must be exactly 16 characters (128-bit IV for AES-CBC).
-  /// Loaded from ENCRYPTION_IV environment variable.
+  /// Loaded from the .env file.
   static final String _ivString = _getEncryptionIV();
 
-  /// Gets encryption key from environment, with fallback validation.
+  /// Gets encryption key from .env, with fallback validation.
   static String _getEncryptionKey() {
-    final key = Platform.environment['ENCRYPTION_KEY'] ?? '';
+    final key = dotenv.env['ENCRYPTION_KEY'] ?? '';
     if (key.isEmpty) {
       throw Exception(
-        'ENCRYPTION_KEY environment variable not set. '
-        'Generate a secure 32-character key and set it before running the app.',
+        'ENCRYPTION_KEY not found in .env. '
+        'Generate a secure 32-character key and add it to the project root .env file.',
       );
     }
     if (key.length != 32) {
@@ -32,13 +32,13 @@ class SecurityService {
     return key;
   }
 
-  /// Gets encryption IV from environment, with fallback validation.
+  /// Gets encryption IV from .env, with fallback validation.
   static String _getEncryptionIV() {
-    final iv = Platform.environment['ENCRYPTION_IV'] ?? '';
+    final iv = dotenv.env['ENCRYPTION_IV'] ?? '';
     if (iv.isEmpty) {
       throw Exception(
-        'ENCRYPTION_IV environment variable not set. '
-        'Generate a secure 16-character IV and set it before running the app.',
+        'ENCRYPTION_IV not found in .env. '
+        'Generate a secure 16-character IV and add it to the project root .env file.',
       );
     }
     if (iv.length != 16) {

@@ -54,18 +54,17 @@ class OrdersScreen extends StatelessWidget {
           icon: const Icon(Icons.add_rounded),
           label: const Text('New Order'),
         ),
-        body: Consumer<DarziProvider>(
-          builder: (context, provider, _) {
-            final all = provider.allOrders;
+        body: Selector<DarziProvider, List<Order>>(
+          selector: (context, provider) => provider.allOrders,
+          builder: (context, all, _) {
             final pending = all.where((o) => o.isPending).toList();
             final completed = all.where((o) => o.isCompleted).toList();
-            final customers = provider.customers;
 
             return TabBarView(
               children: [
-                _OrdersList(orders: all, customers: customers),
-                _OrdersList(orders: pending, customers: customers),
-                _OrdersList(orders: completed, customers: customers),
+                _OrdersList(orders: all),
+                _OrdersList(orders: pending),
+                _OrdersList(orders: completed),
               ],
             );
           },
@@ -79,9 +78,8 @@ class OrdersScreen extends StatelessWidget {
 
 class _OrdersList extends StatelessWidget {
   final List<Order> orders;
-  final List<Customer> customers;
 
-  const _OrdersList({required this.orders, required this.customers});
+  const _OrdersList({required this.orders});
 
   @override
   Widget build(BuildContext context) {
@@ -110,10 +108,10 @@ class _OrdersList extends StatelessWidget {
       itemCount: orders.length,
       itemBuilder: (context, index) {
         final order = orders[index];
-        final customer = customers.firstWhere(
-          (c) => c.id == order.customerId,
-          orElse: Customer.unknown,
-        );
+        // 🚀 Use context.read() to get customer without rebuilding
+        final customer =
+            context.read<DarziProvider>().customerFor(order.customerId) ??
+            Customer.unknown();
         return Dismissible(
           key: ValueKey('order_${order.id ?? index}'),
           direction: DismissDirection.horizontal,

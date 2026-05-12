@@ -182,9 +182,12 @@ class _CustomersScreenState extends State<CustomersScreen> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      body: Consumer<DarziProvider>(
-        builder: (context, provider, _) {
-          final displayList = _searchResults ?? provider.customers;
+      body: Selector<DarziProvider, List<Customer>>(
+        selector: (context, provider) => provider.customers,
+        builder: (context, allCustomers, _) {
+          final displayList = _searchResults ?? allCustomers;
+          // 🚀 Get provider reference for search operations
+          final provider = context.read<DarziProvider>();
 
           return Column(
             children: [

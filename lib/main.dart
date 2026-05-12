@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
+import 'services/config_service.dart';
 import 'providers/darzi_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/customers_screen.dart';
@@ -14,6 +16,8 @@ import 'screens/udhaar_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 🔐 Load environment variables from .env file
+  await dotenv.load(fileName: '.env');
 
   Object? firebaseInitError;
   try {
@@ -177,10 +181,22 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   late final PageController _pageController;
 
+  // 🚀 Cache screens to prevent expensive widget recreation
+  late final List<Widget> _cachedScreens;
+
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
+
+    // Build screens once and cache them
+    _cachedScreens = [
+      DashboardScreen(onNavigate: _onTabSelected),
+      CustomersScreen(onBack: () => _onTabSelected(0)),
+      UdhaarScreen(onBack: () => _onTabSelected(0)),
+      OrdersScreen(onBack: () => _onTabSelected(0)),
+      SettingsScreen(onBack: () => _onTabSelected(0)),
+    ];
   }
 
   @override
@@ -206,14 +222,6 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     const emerald = Color(0xFF065F46);
 
-    final screens = [
-      DashboardScreen(onNavigate: _onTabSelected),
-      CustomersScreen(onBack: () => _onTabSelected(0)),
-      UdhaarScreen(onBack: () => _onTabSelected(0)),
-      OrdersScreen(onBack: () => _onTabSelected(0)),
-      SettingsScreen(onBack: () => _onTabSelected(0)),
-    ];
-
     return PopScope(
       canPop: _currentIndex == 0,
       onPopInvokedWithResult: (didPop, result) {
@@ -226,7 +234,7 @@ class _MainScreenState extends State<MainScreen> {
           controller: _pageController,
           onPageChanged: _onPageChanged,
           physics: const BouncingScrollPhysics(),
-          children: screens,
+          children: _cachedScreens, // 🚀 Use cached screens
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _currentIndex,

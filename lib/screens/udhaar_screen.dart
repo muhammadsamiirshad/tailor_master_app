@@ -31,10 +31,9 @@ class UdhaarScreen extends StatelessWidget {
           },
         ),
       ),
-      body: Consumer<DarziProvider>(
-        builder: (context, provider, _) {
-          final orders = provider.udhaarOrders;
-
+      body: Selector<DarziProvider, List<Order>>(
+        selector: (context, provider) => provider.udhaarOrders,
+        builder: (context, orders, _) {
           if (orders.isEmpty) {
             return Center(
               child: Column(
@@ -65,6 +64,8 @@ class UdhaarScreen extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
+              // 🚀 Use context.read() to access provider without rebuilding
+              final provider = context.read<DarziProvider>();
               final customer =
                   provider.customerFor(order.customerId) ?? Customer.unknown();
               return Dismissible(
@@ -97,7 +98,8 @@ class UdhaarScreen extends StatelessWidget {
                   if (!confirmed) return false;
 
                   if (order.id != null) {
-                    await provider.deleteOrder(order.id!);
+                    // 🚀 Use context.read() for operations
+                    await context.read<DarziProvider>().deleteOrder(order.id!);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Order deleted.')),
