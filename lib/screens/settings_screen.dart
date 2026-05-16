@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/darzi_provider.dart';
+import '../providers/tailor_provider.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class SettingsScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -26,7 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  void _addField(DarziProvider provider) {
+  void _addField(TailorProvider provider) {
     final label = _newFieldCtrl.text.trim();
     if (label.isEmpty) {
       _newFieldFocus.requestFocus();
@@ -69,7 +69,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ElevatedButton.icon(
             onPressed: () async {
               Navigator.pop(context);
-              await FirebaseAuth.instance.signOut();
+              // ✅ Use provider instead of direct Firebase call
+              await context.read<TailorProvider>().signOut();
               // AuthGate will automatically redirect to login.
             },
             icon: const Icon(Icons.logout_rounded, size: 18),
@@ -90,7 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _confirmDelete(
     BuildContext context,
-    DarziProvider provider,
+    TailorProvider provider,
     int index,
     String label,
   ) {
@@ -153,11 +154,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
       ),
-      body: Selector<DarziProvider, List<String>>(
+      body: Selector<TailorProvider, List<String>>(
         selector: (context, provider) => provider.globalMeasurementFields,
         builder: (context, customFields, _) {
           // 🚀 Get provider reference for modification operations
-          final provider = context.read<DarziProvider>();
+          final provider = context.read<TailorProvider>();
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
@@ -185,7 +186,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
+              const TailorAdBanner(),
+              const SizedBox(height: 20),
 
               // ── Measurement Fields ────────────────────────────────────────
               _SectionHeader(
@@ -402,7 +405,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _SectionHeader(
                 icon: Icons.security_rounded,
                 title: 'Account',
-                subtitle: FirebaseAuth.instance.currentUser?.email ?? '',
+                // ✅ Use provider instead of direct Firebase call
+                subtitle: context.read<TailorProvider>().currentUserEmail ?? '',
               ),
               const SizedBox(height: 12),
               Container(

@@ -5,8 +5,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
-import 'services/config_service.dart';
-import 'providers/darzi_provider.dart';
+import 'services/broadcast_service.dart';
+import 'services/notification_service.dart';
+import 'providers/tailor_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/customers_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -28,21 +29,80 @@ Future<void> main() async {
     firebaseInitError = e;
   }
 
-  runApp(MasterDarziApp(firebaseInitError: firebaseInitError));
+  await NotificationService().initialize();
+  await BroadcastService().initialize();
+
+  runApp(MasterTailorApp(firebaseInitError: firebaseInitError));
 }
 
-class MasterDarziApp extends StatelessWidget {
+class MasterTailorApp extends StatefulWidget {
   final Object? firebaseInitError;
 
-  const MasterDarziApp({super.key, this.firebaseInitError});
+  const MasterTailorApp({super.key, this.firebaseInitError});
+
+  @override
+  State<MasterTailorApp> createState() => _MasterTailorAppState();
+}
+
+class _MasterTailorAppState extends State<MasterTailorApp>
+    with WidgetsBindingObserver {
+  final NotificationService _notificationService = NotificationService();
+  bool _wasInBackground = false;
+  DateTime? _lastPausedAt;
+  DateTime? _lastResumeNotificationAt;
+  final Duration _minBackgroundDuration = const Duration(seconds: 5);
+  final Duration _resumeNotifyCooldown = const Duration(seconds: 30);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Handles background persistence and system interruptions like incoming calls.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _wasInBackground = true;
+      _lastPausedAt = DateTime.now();
+      debugPrint('App paused: Saving state...');
+      return;
+    }
+
+    if (state == AppLifecycleState.resumed && _wasInBackground) {
+      _wasInBackground = false;
+      final now = DateTime.now();
+      final pausedAt = _lastPausedAt;
+      final wasLongEnough =
+          pausedAt == null ||
+          now.difference(pausedAt) >= _minBackgroundDuration;
+      final lastShownAt = _lastResumeNotificationAt;
+      final isCooldownOver =
+          lastShownAt == null ||
+          now.difference(lastShownAt) >= _resumeNotifyCooldown;
+
+      if (wasLongEnough && isCooldownOver) {
+        _lastResumeNotificationAt = now;
+        _notificationService.showWelcomeBackNotification();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => DarziProvider()..init(),
+      create: (_) => TailorProvider()..init(),
       child: MaterialApp(
         title: 'Tailor Master',
         debugShowCheckedModeBanner: false,
+        builder: (context, child) => BroadcastOverlay(child: child),
         // ── Smooth transitions + swipe-back gesture on all platforms ──────
         theme: ThemeData(
           useMaterial3: true,
@@ -93,10 +153,58 @@ class MasterDarziApp extends StatelessWidget {
             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
-        home: firebaseInitError == null
+        home: widget.firebaseInitError == null
             ? const AuthGate()
-            : FirebaseInitErrorScreen(error: firebaseInitError),
+            : FirebaseInitErrorScreen(error: widget.firebaseInitError),
       ),
+    );
+  }
+}
+
+class BroadcastOverlay extends StatelessWidget {
+  final Widget? child;
+
+  const BroadcastOverlay({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<bool>(
+      stream: BroadcastService().offlineStream,
+      initialData: false,
+      builder: (context, snapshot) {
+        final isOffline = snapshot.data ?? false;
+        final content = child ?? const SizedBox.shrink();
+        if (!isOffline) return content;
+
+        return Stack(
+          children: [
+            content,
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Container(
+                  color: Colors.red.shade700,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: const Text(
+                    'Working Offline - Data will sync later.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -206,15 +314,16 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _onTabSelected(int index) {
-    setState(() => _currentIndex = index);
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    if (_currentIndex == index) return;
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(index);
+    } else {
+      setState(() => _currentIndex = index);
+    }
   }
 
   void _onPageChanged(int index) {
+    if (_currentIndex == index) return;
     setState(() => _currentIndex = index);
   }
 
@@ -233,7 +342,8 @@ class _MainScreenState extends State<MainScreen> {
         body: PageView(
           controller: _pageController,
           onPageChanged: _onPageChanged,
-          physics: const BouncingScrollPhysics(),
+          physics: const _QuickSwipeScrollPhysics(),
+          allowImplicitScrolling: true,
           children: _cachedScreens, // 🚀 Use cached screens
         ),
         bottomNavigationBar: NavigationBar(
@@ -273,4 +383,17 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
+}
+
+class _QuickSwipeScrollPhysics extends PageScrollPhysics {
+  const _QuickSwipeScrollPhysics({super.parent});
+
+  @override
+  _QuickSwipeScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return _QuickSwipeScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  // Reduce swipe distance needed to change pages.
+  @override
+  double get dragStartDistanceMotionThreshold => 3.0;
 }

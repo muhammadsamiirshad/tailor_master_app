@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/customer.dart';
 import '../models/order.dart';
-import '../providers/darzi_provider.dart';
+import '../providers/tailor_provider.dart';
 import 'add_order_screen.dart';
 
 const _kEmerald = Color(0xFF065F46);
@@ -20,7 +20,7 @@ class OrderDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DarziProvider>(
+    return Consumer<TailorProvider>(
       builder: (context, provider, _) {
         final order = provider.orderFor(orderId);
         if (order == null) {
@@ -118,6 +118,14 @@ class _CustomerCard extends StatelessWidget {
 
   const _CustomerCard({required this.customer, required this.order});
 
+  String _normalizeWhatsAppPhone(String input) {
+    final cleaned = input.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (cleaned.startsWith('+')) return cleaned;
+    if (cleaned.startsWith('0')) return '+92${cleaned.substring(1)}';
+    if (cleaned.startsWith('92')) return '+$cleaned';
+    return cleaned;
+  }
+
   Future<void> _launchCall(BuildContext context) async {
     if (customer.phone.trim().isEmpty) return;
     final uri = Uri.parse('tel:${customer.phone.trim()}');
@@ -132,25 +140,29 @@ class _CustomerCard extends StatelessWidget {
 
   Future<void> _launchWhatsApp(BuildContext context) async {
     if (customer.phone.trim().isEmpty) return;
-    final phone = customer.phone.replaceAll(RegExp(r'[\s\-()]'), '');
+    final phone = _normalizeWhatsAppPhone(customer.phone);
+    final webPhone = phone.startsWith('+') ? phone.substring(1) : phone;
     final msg = Uri.encodeComponent(
       'Hello ${customer.name}, this is a message regarding your order #${order.shortId} from Tailor Master.',
     );
 
-    // Use platform-specific URL scheme: whatsapp:// on mobile, https://wa.me on web.
-    late Uri uri;
-    if (Platform.isAndroid) {
-      uri = Uri.parse('whatsapp://send?phone=$phone&text=$msg');
-    } else if (Platform.isIOS) {
-      uri = Uri.parse('https://wa.me/$phone?text=$msg');
+    final appUri = Uri.parse('whatsapp://send?phone=$phone&text=$msg');
+    final webUri = Uri.parse('https://wa.me/$webPhone?text=$msg');
+
+    bool launched = false;
+    if (!kIsWeb && Platform.isAndroid) {
+      launched = await launchUrl(appUri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        launched = await launchUrl(
+          webUri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
     } else {
-      // Web and other platforms
-      uri = Uri.parse('https://wa.me/$phone?text=$msg');
+      launched = await launchUrl(webUri, mode: LaunchMode.externalApplication);
     }
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (context.mounted) {
+    if (!launched && context.mounted) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Could not open WhatsApp.')));
@@ -441,7 +453,7 @@ class _OrderActions extends StatelessWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await context.read<DarziProvider>().recordPayment(
+              await context.read<TailorProvider>().recordPayment(
                 order.id!,
                 balance,
               );
@@ -462,7 +474,7 @@ class _OrderActions extends StatelessWidget {
               if (!formKey.currentState!.validate()) return;
               final amount = double.parse(amountCtrl.text.trim());
               Navigator.pop(ctx);
-              await context.read<DarziProvider>().recordPayment(
+              await context.read<TailorProvider>().recordPayment(
                 order.id!,
                 amount,
               );
@@ -508,7 +520,7 @@ class _OrderActions extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    await context.read<DarziProvider>().updateOrderStatus(
+                    await context.read<TailorProvider>().updateOrderStatus(
                       order.id!,
                       'Completed',
                     );

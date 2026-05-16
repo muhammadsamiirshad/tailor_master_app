@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 import 'add_customer_dialog.dart';
 import '../models/customer.dart';
 import '../models/order.dart';
-import '../providers/darzi_provider.dart';
+import '../providers/tailor_provider.dart';
 
 class AddOrderScreen extends StatefulWidget {
   final Order? existingOrder;
@@ -57,14 +57,14 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
     _deliveryDate = existing.deliveryDate;
     _clothImagePath = existing.clothImagePath;
 
-    final provider = context.read<DarziProvider>();
+    final provider = context.read<TailorProvider>();
     final customer =
         provider.customerFor(existing.customerId) ?? Customer.unknown();
     _selectedCustomer = customer.id == null ? null : customer;
     _customerSearchCtrl.text = customer.id == null ? '' : customer.name;
   }
 
-  void _onCustomerSearch(String query, DarziProvider provider) {
+  void _onCustomerSearch(String query, TailorProvider provider) {
     if (_selectedCustomer != null) return;
     setState(() {
       _searchResults = provider.filterCustomers(query);
@@ -202,7 +202,7 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
       status: widget.existingOrder?.status ?? 'Pending',
     );
 
-    final provider = context.read<DarziProvider>();
+    final provider = context.read<TailorProvider>();
     if (widget.existingOrder != null) {
       await provider.updateOrder(order);
     } else {
@@ -251,7 +251,7 @@ class _AddOrderScreenState extends State<AddOrderScreen> {
   Widget build(BuildContext context) {
     const emerald = Color(0xFF065F46);
     final isEditing = widget.existingOrder != null;
-    final provider = context.watch<DarziProvider>();
+    final provider = context.watch<TailorProvider>();
 
     return Scaffold(
       appBar: AppBar(title: Text(isEditing ? 'Edit Order' : 'New Order')),

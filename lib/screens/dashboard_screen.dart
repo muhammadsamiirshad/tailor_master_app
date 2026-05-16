@@ -8,7 +8,8 @@ import 'package:provider/provider.dart';
 import '../models/customer.dart';
 import '../models/dashboard_summary.dart';
 import '../models/order.dart';
-import '../providers/darzi_provider.dart';
+import '../providers/tailor_provider.dart';
+import '../widgets/ad_banner_widget.dart';
 import 'add_order_screen.dart';
 import 'order_details_screen.dart';
 
@@ -45,14 +46,14 @@ class DashboardScreen extends StatelessWidget {
         label: const Text('New Order'),
       ),
       // 🚀 Use Selector instead of Consumer to only rebuild when dashboard changes
-      body: Selector<DarziProvider, DashboardSummary>(
+      body: Selector<TailorProvider, DashboardSummary>(
         selector: (context, provider) => provider.dashboardSummary,
         builder: (context, dashboard, _) {
           final monthName = DateFormat('MMMM').format(DateTime.now());
 
           return RefreshIndicator(
             color: _kEmerald,
-            onRefresh: () => context.read<DarziProvider>().init(),
+            onRefresh: () => context.read<TailorProvider>().init(),
             child: CustomScrollView(
               slivers: [
                 // ── Gradient App Bar ─────────────────────────────────────────
@@ -164,6 +165,8 @@ class DashboardScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+
+                      const TailorAdBanner(),
 
                       // ── Monthly Revenue ───────────────────────────────────────
                       Padding(
@@ -491,7 +494,7 @@ class _UrgentOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.read<DarziProvider>();
+    final provider = context.read<TailorProvider>();
     final formattedDate = DateFormat('d MMM').format(order.deliveryDate);
     final isToday = _isToday(order.deliveryDate);
 

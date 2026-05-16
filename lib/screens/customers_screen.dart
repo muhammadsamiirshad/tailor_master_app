@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'add_customer_dialog.dart';
 import '../models/customer.dart';
-import '../providers/darzi_provider.dart';
+import '../providers/tailor_provider.dart';
+import '../widgets/ad_banner_widget.dart';
 
 class CustomersScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -26,7 +27,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   /// ✅ Use local in-memory search instead of database queries (INSTANT, NO LAG)
-  Future<void> _onSearchChanged(String query, DarziProvider provider) async {
+  Future<void> _onSearchChanged(String query, TailorProvider provider) async {
     if (query.trim().isEmpty) {
       setState(() {
         _searchResults = null;
@@ -65,7 +66,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
 
   Future<void> _showEditCustomerDialog(
     BuildContext context,
-    DarziProvider provider,
+    TailorProvider provider,
     Customer customer,
   ) async {
     await showDialog(
@@ -182,12 +183,12 @@ class _CustomersScreenState extends State<CustomersScreen> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      body: Selector<DarziProvider, List<Customer>>(
+      body: Selector<TailorProvider, List<Customer>>(
         selector: (context, provider) => provider.customers,
         builder: (context, allCustomers, _) {
           final displayList = _searchResults ?? allCustomers;
           // 🚀 Get provider reference for search operations
-          final provider = context.read<DarziProvider>();
+          final provider = context.read<TailorProvider>();
 
           return Column(
             children: [
@@ -253,6 +254,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
                     ],
                   ),
                 ),
+
+              const TailorAdBanner(),
 
               // ── List ──────────────────────────────────────────────────────
               Expanded(

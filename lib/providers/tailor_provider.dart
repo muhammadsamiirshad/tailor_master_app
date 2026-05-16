@@ -2,13 +2,16 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
+import '../services/broadcast_service.dart';
 import '../models/dashboard_summary.dart';
 import '../models/customer.dart';
 import '../models/order.dart';
 import '../services/rtdb_service.dart';
+import '../services/auth_service.dart';
 
-class DarziProvider extends ChangeNotifier {
+class TailorProvider extends ChangeNotifier {
   final RTDBService _db = RTDBService.instance;
+  final AuthService _auth = AuthService();
 
   List<Customer> _customers = [];
   List<Order> _urgentOrders = [];
@@ -249,6 +252,7 @@ class DarziProvider extends ChangeNotifier {
     ]);
     _recomputeDashboardMetrics();
     notifyListeners();
+    BroadcastService().sendNewOrderBroadcast(orderId: id);
     return id;
   }
 
@@ -299,4 +303,21 @@ class DarziProvider extends ChangeNotifier {
   Future<List<Order>> getOrdersForCustomer(String customerId) {
     return _db.getOrdersByCustomer(customerId);
   }
+
+  // ─── Authentication (UI-facing abstraction) ────────────────────────────────
+
+  /// Get the current user's email. Returns null if not authenticated.
+  /// ✅ UI should use this instead of FirebaseAuth.instance.currentUser?.email
+  String? get currentUserEmail => _auth.currentUser?.email;
+
+  /// Sign out the current user and redirect to login.
+  /// ✅ UI should use this instead of FirebaseAuth.instance.signOut()
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  /// Get auth state stream for the AuthGate.
+  /// ✅ main.dart should use this instead of FirebaseAuth.instance.authStateChanges()
+  Stream<String?> get authStateStream =>
+      _auth.authStateChanges().map((user) => user?.email);
 }

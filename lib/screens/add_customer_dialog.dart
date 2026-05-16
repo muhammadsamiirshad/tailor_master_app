@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/customer.dart';
-import '../providers/darzi_provider.dart';
+import '../providers/tailor_provider.dart';
 
 class AddCustomerDialog extends StatefulWidget {
   final String initialName;
@@ -70,7 +70,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final globalFields = context
-          .read<DarziProvider>()
+          .read<TailorProvider>()
           .globalMeasurementFields;
       if (globalFields.isNotEmpty) {
         setState(() {
@@ -147,7 +147,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final provider = context.read<DarziProvider>();
+    final provider = context.read<TailorProvider>();
     final newPhone = _phoneCtrl.text.trim();
 
     // Check for duplicate phone number
@@ -193,7 +193,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
     );
 
     try {
-      final provider = context.read<DarziProvider>();
+      final provider = context.read<TailorProvider>();
       if (widget.existingCustomer != null) {
         await provider.updateCustomer(customer);
       } else {

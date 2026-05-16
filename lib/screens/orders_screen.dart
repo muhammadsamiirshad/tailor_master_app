@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../models/customer.dart';
 import '../models/order.dart';
-import '../providers/darzi_provider.dart';
+import '../providers/tailor_provider.dart';
+import '../widgets/ad_banner_widget.dart';
 import 'add_order_screen.dart';
 import 'order_details_screen.dart';
 
@@ -54,7 +55,7 @@ class OrdersScreen extends StatelessWidget {
           icon: const Icon(Icons.add_rounded),
           label: const Text('New Order'),
         ),
-        body: Selector<DarziProvider, List<Order>>(
+        body: Selector<TailorProvider, List<Order>>(
           selector: (context, provider) => provider.allOrders,
           builder: (context, all, _) {
             final pending = all.where((o) => o.isPending).toList();
@@ -84,36 +85,52 @@ class _OrdersList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (orders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.assignment_outlined, size: 72, color: Colors.grey[300]),
-            const SizedBox(height: 12),
-            Text(
-              'No orders here yet',
-              style: TextStyle(
-                fontSize: 17,
-                color: Colors.grey[500],
-                fontWeight: FontWeight.w500,
-              ),
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+        children: [
+          const TailorAdBanner(),
+          const SizedBox(height: 24),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.assignment_outlined,
+                  size: 72,
+                  color: Colors.grey[300],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No orders here yet',
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-      itemCount: orders.length,
+      itemCount: orders.length + 1,
       itemBuilder: (context, index) {
-        final order = orders[index];
+        if (index == 0) {
+          return const TailorAdBanner();
+        }
+
+        final orderIndex = index - 1;
+        final order = orders[orderIndex];
         // 🚀 Use context.read() to get customer without rebuilding
         final customer =
-            context.read<DarziProvider>().customerFor(order.customerId) ??
+            context.read<TailorProvider>().customerFor(order.customerId) ??
             Customer.unknown();
         return Dismissible(
-          key: ValueKey('order_${order.id ?? index}'),
+          key: ValueKey('order_${order.id ?? orderIndex}'),
           direction: DismissDirection.horizontal,
           background: const _SwipeAction(
             color: _kEmerald,
@@ -142,7 +159,7 @@ class _OrdersList extends StatelessWidget {
             if (!confirmed) return false;
 
             if (order.id != null) {
-              await context.read<DarziProvider>().deleteOrder(order.id!);
+              await context.read<TailorProvider>().deleteOrder(order.id!);
               if (context.mounted) {
                 ScaffoldMessenger.of(
                   context,
@@ -165,7 +182,7 @@ class _OrdersList extends StatelessWidget {
             onDelete: () async {
               final confirmed = await _confirmDeleteOrder(context, order);
               if (confirmed && order.id != null) {
-                await context.read<DarziProvider>().deleteOrder(order.id!);
+                await context.read<TailorProvider>().deleteOrder(order.id!);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Order deleted.')),
@@ -222,7 +239,7 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.read<DarziProvider>();
+    final provider = context.read<TailorProvider>();
     final date = DateFormat('d MMM yyyy').format(order.deliveryDate);
     final isPending = order.isPending;
     final balance = order.remainingBalance;

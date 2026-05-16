@@ -6,7 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/customer.dart';
 import '../models/order.dart';
-import '../providers/darzi_provider.dart';
+import '../providers/tailor_provider.dart';
+import '../widgets/ad_banner_widget.dart';
 import 'add_order_screen.dart';
 import 'order_details_screen.dart';
 
@@ -31,45 +32,60 @@ class UdhaarScreen extends StatelessWidget {
           },
         ),
       ),
-      body: Selector<DarziProvider, List<Order>>(
+      body: Selector<TailorProvider, List<Order>>(
         selector: (context, provider) => provider.udhaarOrders,
         builder: (context, orders, _) {
           if (orders.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 84,
-                    color: Colors.grey[300],
+            return ListView(
+              padding: const EdgeInsets.all(12),
+              children: [
+                const TailorAdBanner(),
+                const SizedBox(height: 24),
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: 84,
+                        color: Colors.grey[300],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'No pending dues!',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'All payments are cleared.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No pending dues!',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'All payments are cleared.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
+                ),
+              ],
             );
           }
 
           return ListView.builder(
             padding: const EdgeInsets.all(12),
-            itemCount: orders.length,
+            itemCount: orders.length + 1,
             itemBuilder: (context, index) {
-              final order = orders[index];
+              if (index == 0) {
+                return const TailorAdBanner();
+              }
+
+              final orderIndex = index - 1;
+              final order = orders[orderIndex];
               // 🚀 Use context.read() to access provider without rebuilding
-              final provider = context.read<DarziProvider>();
+              final provider = context.read<TailorProvider>();
               final customer =
                   provider.customerFor(order.customerId) ?? Customer.unknown();
               return Dismissible(
-                key: ValueKey('udhaar_${order.id ?? index}'),
+                key: ValueKey('udhaar_${order.id ?? orderIndex}'),
                 direction: DismissDirection.horizontal,
                 background: const _SwipeAction(
                   color: Color(0xFF065F46),
@@ -99,7 +115,7 @@ class UdhaarScreen extends StatelessWidget {
 
                   if (order.id != null) {
                     // 🚀 Use context.read() for operations
-                    await context.read<DarziProvider>().deleteOrder(order.id!);
+                    await context.read<TailorProvider>().deleteOrder(order.id!);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Order deleted.')),
@@ -151,38 +167,48 @@ class _UdhaarCard extends StatelessWidget {
 
   const _UdhaarCard({required this.order, required this.customer});
 
+  String _normalizeWhatsAppPhone(String input) {
+    final cleaned = input.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (cleaned.startsWith('+')) return cleaned;
+    if (cleaned.startsWith('0')) return '+92${cleaned.substring(1)}';
+    if (cleaned.startsWith('92')) return '+$cleaned';
+    return cleaned;
+  }
+
   Future<void> _sendWhatsAppReminder(BuildContext context) async {
     // Strip spaces, dashes, parentheses for a clean number.
-    final phone = customer.phone.replaceAll(RegExp(r'[\s\-()]'), '');
+    final phone = _normalizeWhatsAppPhone(customer.phone);
+    final webPhone = phone.startsWith('+') ? phone.substring(1) : phone;
     final balance = order.remainingBalance.toStringAsFixed(0);
 
     final message = Uri.encodeComponent(
       'Hello ${customer.name}, your order #${order.shortId} from Tailor Master is ready. Remaining payment: Rs $balance. Please collect it.',
     );
 
-    // Use platform-specific URL scheme: whatsapp:// on mobile, https://wa.me on web.
-    late Uri uri;
-    if (Platform.isAndroid) {
-      uri = Uri.parse('whatsapp://send?phone=$phone&text=$message');
-    } else if (Platform.isIOS) {
-      uri = Uri.parse('https://wa.me/$phone?text=$message');
-    } else {
-      // Web and other platforms
-      uri = Uri.parse('https://wa.me/$phone?text=$message');
-    }
+    final appUri = Uri.parse('whatsapp://send?phone=$phone&text=$message');
+    final webUri = Uri.parse('https://wa.me/$webPhone?text=$message');
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Could not open WhatsApp. Please check the phone number.',
-            ),
-          ),
+    bool launched = false;
+    if (Platform.isAndroid) {
+      launched = await launchUrl(appUri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        launched = await launchUrl(
+          webUri,
+          mode: LaunchMode.externalApplication,
         );
       }
+    } else {
+      launched = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+    }
+
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not open WhatsApp. Please check the phone number.',
+          ),
+        ),
+      );
     }
   }
 
@@ -238,7 +264,7 @@ class _UdhaarCard extends StatelessWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await context.read<DarziProvider>().recordPayment(
+              await context.read<TailorProvider>().recordPayment(
                 order.id!,
                 balance,
               );
@@ -261,7 +287,7 @@ class _UdhaarCard extends StatelessWidget {
               if (!formKey.currentState!.validate()) return;
               final amount = double.parse(amountCtrl.text.trim());
               Navigator.pop(ctx);
-              await context.read<DarziProvider>().recordPayment(
+              await context.read<TailorProvider>().recordPayment(
                 order.id!,
                 amount,
               );

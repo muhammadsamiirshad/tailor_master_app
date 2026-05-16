@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:master_darzi/screens/auth/login_screen.dart';
+import 'package:tailor_master/screens/auth/login_screen.dart';
 
 void main() {
   testWidgets('App smoke test — LoginScreen renders', (
